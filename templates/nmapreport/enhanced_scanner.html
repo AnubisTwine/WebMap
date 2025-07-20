@@ -1,0 +1,413 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebMap - Enhanced Nmap Scanner</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.2/css/all.css" integrity="sha384-/rXc/GQVaYpyDdyxK+ecHPVYJSN9bmVFBvjA/9eOB+pb3F2w2N6fc5qB9Ew5yIns" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" media="screen,projection" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Roboto', sans-serif;
+        }
+        .scanner-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .scanner-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+        .scanner-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        .scan-form {
+            padding: 20px;
+        }
+        .input-field label {
+            color: #666;
+        }
+        .input-field input:focus + label,
+        .input-field select:focus + label {
+            color: #667eea !important;
+        }
+        .input-field input:focus,
+        .input-field select:focus {
+            border-bottom: 1px solid #667eea !important;
+            box-shadow: 0 1px 0 0 #667eea !important;
+        }
+        .btn-scan {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .scan-status {
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .status-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+        .status-running { border-left-color: #ff9800; }
+        .status-completed { border-left-color: #4caf50; }
+        .status-failed { border-left-color: #f44336; }
+        .progress-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        .progress-animated {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .scan-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .history-item:hover {
+            background: #f5f5f5;
+        }
+        .nav-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .nav-wrapper .brand-logo {
+            color: white !important;
+        }
+        .tabs .tab a {
+            color: #667eea;
+        }
+        .tabs .tab a.active {
+            color: #764ba2;
+        }
+        .tabs .indicator {
+            background-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <a href="/" class="brand-logo center">
+                <i class="material-icons left">security</i>
+                WebMap Enhanced Scanner
+            </a>
+            <ul class="right">
+                <li><a href="/"><i class="material-icons left">dashboard</i>Dashboard</a></li>
+                <li><a href="/api/docs"><i class="material-icons left">api</i>API</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="scanner-container">
+        <div class="scanner-card">
+            <div class="scanner-header">
+                <h4><i class="material-icons left">radar</i>Nmap Scanner</h4>
+                <p>Advanced network scanning and reconnaissance tool</p>
+            </div>
+
+            <div class="row">
+                <div class="col s12">
+                    <ul class="tabs">
+                        <li class="tab col s3"><a class="active" href="#scanner">Scanner</a></li>
+                        <li class="tab col s3"><a href="#active-scans">Active Scans</a></li>
+                        <li class="tab col s3"><a href="#history">History</a></li>
+                        <li class="tab col s3"><a href="#help">Help</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Scanner Tab -->
+            <div id="scanner" class="col s12">
+                <form id="scan-form" class="scan-form">
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="target" type="text" required>
+                            <label for="target">Target (IP, CIDR, hostname)</label>
+                            <span class="helper-text">Examples: 192.168.1.1, 192.168.1.0/24, scanme.nmap.org</span>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <select id="scan-type" required>
+                                {% for type, description in scan_types.items %}
+                                    <option value="{{ type }}">{{ type|title }}</option>
+                                {% endfor %}
+                            </select>
+                            <label>Scan Type</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="ports" type="text">
+                            <label for="ports">Ports (optional)</label>
+                            <span class="helper-text">Examples: 80,443 or 1-1000</span>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="additional-args" type="text">
+                            <label for="additional-args">Additional Arguments (optional)</label>
+                            <span class="helper-text">Extra nmap options</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s12 center">
+                            <button type="submit" class="btn btn-scan waves-effect waves-light">
+                                <i class="material-icons left">play_arrow</i>
+                                Start Scan
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Scan Type Info -->
+                <div class="row">
+                    <div class="col s12">
+                        <div id="scan-type-info" class="card-panel light-blue lighten-5">
+                            <h6><i class="material-icons left">info</i>Scan Type Information</h6>
+                            <p id="scan-type-description">Select a scan type to see its description</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Scans Tab -->
+            <div id="active-scans" class="col s12">
+                <div class="scan-status">
+                    <h5><i class="material-icons left">timeline</i>Active Scans</h5>
+                    <div id="active-scans-list">
+                        <p class="center grey-text">No active scans</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history" class="col s12">
+                <div class="scan-status">
+                    <h5><i class="material-icons left">history</i>Scan History</h5>
+                    <div class="scan-history" id="scan-history-list">
+                        {% for scan in scan_history %}
+                        <div class="history-item" data-filename="{{ scan.filename }}">
+                            <strong>{{ scan.filename }}</strong>
+                            <br>
+                            <small class="grey-text">{{ scan.created }} - {{ scan.size }} bytes</small>
+                        </div>
+                        {% empty %}
+                        <p class="center grey-text">No scan history found</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Tab -->
+            <div id="help" class="col s12">
+                <div class="scan-status">
+                    <h5><i class="material-icons left">help</i>Scanner Help</h5>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <h6>Scan Types</h6>
+                            <ul class="collection">
+                                {% for type, description in scan_types.items %}
+                                <li class="collection-item">
+                                    <strong>{{ type|title }}</strong><br>
+                                    <small>{{ description }}</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col s12 m6">
+                            <h6>Common Use Cases</h6>
+                            <div class="card-panel">
+                                <p><strong>Quick Discovery:</strong> Use "ping_sweep" to find live hosts</p>
+                                <p><strong>Service Detection:</strong> Use "version_detection" for service versions</p>
+                                <p><strong>Vulnerability Assessment:</strong> Use "vuln_scan" for security checks</p>
+                                <p><strong>Comprehensive Audit:</strong> Use "comprehensive" for full analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            // Initialize Materialize components
+            $('.tabs').tabs();
+            $('select').formSelect();
+            
+            // Scan type descriptions
+            const scanTypeDescriptions = {
+                {% for type, description in scan_types.items %}
+                '{{ type }}': '{{ description|escapejs }}',
+                {% endfor %}
+            };
+            
+            // Update scan type info when selection changes
+            $('#scan-type').on('change', function() {
+                const selectedType = $(this).val();
+                $('#scan-type-description').text(scanTypeDescriptions[selectedType] || 'No description available');
+            });
+            
+            // Set initial description
+            $('#scan-type-description').text(scanTypeDescriptions[$('#scan-type').val()]);
+            
+            // Handle form submission
+            $('#scan-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    target: $('#target').val(),
+                    scan_type: $('#scan-type').val(),
+                    ports: $('#ports').val(),
+                    additional_args: $('#additional-args').val()
+                };
+                
+                // Disable form during scan
+                $('#scan-form input, #scan-form select, #scan-form button').prop('disabled', true);
+                
+                $.ajax({
+                    url: '/api/scan/start',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Success!", "Scan started successfully", "success");
+                            // Switch to active scans tab
+                            $('.tabs').tabs('select', 'active-scans');
+                            // Start monitoring this scan
+                            monitorScan(response.scan_id);
+                        } else {
+                            swal("Error!", response.error || "Failed to start scan", "error");
+                        }
+                    },
+                    error: function(xhr) {
+                        const error = xhr.responseJSON?.error || "Failed to start scan";
+                        swal("Error!", error, "error");
+                    },
+                    complete: function() {
+                        // Re-enable form
+                        $('#scan-form input, #scan-form select, #scan-form button').prop('disabled', false);
+                    }
+                });
+            });
+            
+            // Monitor scan progress
+            function monitorScan(scanId) {
+                const checkInterval = setInterval(function() {
+                    $.ajax({
+                        url: `/api/scan/status/${scanId}`,
+                        method: 'GET',
+                        success: function(response) {
+                            if (response.success) {
+                                updateActiveScansList();
+                                
+                                // Stop monitoring if scan is complete
+                                if (['completed', 'failed', 'cancelled'].includes(response.scan.status)) {
+                                    clearInterval(checkInterval);
+                                    if (response.scan.status === 'completed') {
+                                        swal("Complete!", "Scan completed successfully", "success");
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }, 2000); // Check every 2 seconds
+            }
+            
+            // Update active scans list
+            function updateActiveScansList() {
+                $.ajax({
+                    url: '/api/scan/active',
+                    method: 'GET',
+                    success: function(response) {
+                        const container = $('#active-scans-list');
+                        container.empty();
+                        
+                        if (response.scans && response.scans.length > 0) {
+                            response.scans.forEach(function(scan) {
+                                const statusClass = 'status-' + scan.status;
+                                const scanItem = $(`
+                                    <div class="status-item ${statusClass}">
+                                        <div class="row valign-wrapper">
+                                            <div class="col s8">
+                                                <strong>${scan.target}</strong> - ${scan.scan_type}
+                                                <br><small>${scan.progress || 'Processing...'}</small>
+                                            </div>
+                                            <div class="col s4 right-align">
+                                                <span class="badge ${scan.status}">${scan.status}</span>
+                                            </div>
+                                        </div>
+                                        ${scan.status === 'running' ? '<div class="progress-bar"><div class="progress-fill progress-animated" style="width: 100%"></div></div>' : ''}
+                                    </div>
+                                `);
+                                container.append(scanItem);
+                            });
+                        } else {
+                            container.html('<p class="center grey-text">No active scans</p>');
+                        }
+                    }
+                });
+            }
+            
+            // Handle history item clicks
+            $(document).on('click', '.history-item', function() {
+                const filename = $(this).data('filename');
+                window.open(`/api/scan/results/${filename}`, '_blank');
+            });
+            
+            // Auto-refresh active scans every 5 seconds
+            setInterval(updateActiveScansList, 5000);
+            
+            // Initial load of active scans
+            updateActiveScansList();
+        });
+    </script>
+</body>
+</html>
